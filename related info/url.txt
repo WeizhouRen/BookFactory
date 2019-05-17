@@ -1,0 +1,3 @@
+Web interface url: http://s4522613-phpcass.uqcloud.net/index.php
+
+Zeppelin url: http://s4522613.uqcloud.net

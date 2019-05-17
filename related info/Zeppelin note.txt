@@ -1,0 +1,36 @@
+ 
+
+//acess Cassandra keyspark.table
+ val keySpace = "book"
+ val table = "orders"
+ val df = sqlContext.read.format("org.apache.spark.sql.cassandra").options(Map("keyspace"-> keySpace, "table" -> table)).load()
+ df.createOrReplaceTempView(table)
+
+
+%sql
+/*retrieve all orders of a table*/
+select * from orders
+
+
+//import Spark ML library
+import org.apache.spark.mllib.recommendation.ALS
+import org.apache.spark.mllib.recommendation.MatrixFactorizationModel
+import org.apache.spark.mllib.recommendation.Rating
+//get data from cassandra
+val test = df.select($"userid",$"bookid",$"rating")
+//Each row in the score matrix RDD is converted to a Rating type
+val records = test.as[(Int,Int,Double)].map{
+    case (userid, bookid, rating) => Rating(userid.toInt, bookid.toInt, rating.toDouble)
+}
+//converte spark.row type to spark.rdd type
+val ratings = records.rdd
+//ALS
+val model = ALS.train(ratings, 10, 10, 0.01)
+//input user id
+val userId = 10
+//recommend 4 books to user 10 
+val K = 4
+//training
+val topKRecs = model.recommendProducts(userId, K)
+// the first col is user id, second col is booid recommend to user, third col is rating 
+println(topKRecs.mkString("\n"))
